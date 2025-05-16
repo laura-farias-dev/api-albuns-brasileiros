@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Álbuns Brasileiros</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+    <style>
+        .album-card {
+            transition: transform 0.2s;
+        }
+        .album-card:hover {
+            transform: translateY(-5px);
+        }
+        .action-btn {
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .album-card:hover .action-btn {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <div class="container py-5">
+        <h1 class="text-center mb-5">Álbuns Brasileiros</h1>
+        
+        <!-- Formulário de Adição -->
+        <div class="card mb-5">
+            <div class="card-body">
+                <h5 class="card-title">Adicionar Novo Álbum</h5>
+                <form id="albumForm" class="row g-3">
+                    <div class="col-md-4">
+                        <input type="text" class="form-control" id="nome" placeholder="Nome do Álbum" required>
+                    </div>
+                    <div class="col-md-4">
+                        <input type="text" class="form-control" id="artista" placeholder="Artista" required>
+                    </div>
+                    <div class="col-md-2">
+                        <input type="number" class="form-control" id="ano" placeholder="Ano" required>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary w-100">Adicionar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Lista de Álbuns -->
+        <div class="row" id="albumList">
+            <!-- Álbuns serão inseridos aqui via JavaScript -->
+        </div>
+    </div>
+
+    <!-- Modal de Edição -->
+    <div class="modal fade" id="editModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Editar Álbum</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editForm">
+                        <input type="hidden" id="editId">
+                        <div class="mb-3">
+                            <label for="editNome" class="form-label">Nome do Álbum</label>
+                            <input type="text" class="form-control" id="editNome" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editArtista" class="form-label">Artista</label>
+                            <input type="text" class="form-control" id="editArtista" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editAno" class="form-label">Ano</label>
+                            <input type="number" class="form-control" id="editAno" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="updateAlbum()">Salvar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const API_URL = 'http://localhost:5000/api/albuns';
+        let editModal;
+
+        // Função para carregar os álbuns
+        async function loadAlbums() {
+            try {
+                const response = await fetch(API_URL);
+                const albums = await response.json();
+                const albumList = document.getElementById('albumList');
+                albumList.innerHTML = '';
+
+                albums.forEach(album => {
+                    const albumCard = `
+                        <div class="col-md-6 col-lg-4 mb-4">
+                            <div class="card album-card h-100">
+                                <div class="card-body">
+                                    <div class="action-btn position-absolute top-0 end-0 m-2">
+                                        <button class="btn btn-primary btn-sm me-1" onclick="openEditModal(${album.id}, '${album.nome}', '${album.artista}', ${album.ano})">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                        <button class="btn btn-danger btn-sm" onclick="deleteAlbum(${album.id})">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                    <h5 class="card-title">${album.nome}</h5>
+                                    <h6 class="card-subtitle mb-2 text-muted">${album.artista}</h6>
+                                    <p class="card-text">Ano: ${album.ano}</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    albumList.innerHTML += albumCard;
+                });
+            } catch (error) {
+                console.error('Erro ao carregar álbuns:', error);
+                alert('Erro ao carregar álbuns');
+            }
+        }
+
+        // Função para adicionar um álbum
+        async function addAlbum(event) {
+            event.preventDefault();
+            
+            const album = {
+                nome: document.getElementById('nome').value,
+                artista: document.getElementById('artista').value,
+                ano: parseInt(document.getElementById('ano').value)
+            };
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(album)
+                });
+
+                if (response.ok) {
+                    document.getElementById('albumForm').reset();
+                    loadAlbums();
+                } else {
+                    throw new Error('Erro ao adicionar álbum');
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                alert('Erro ao adicionar álbum');
+            }
+        }
+
+        // Função para abrir o modal de edição
+        function openEditModal(id, nome, artista, ano) {
+            document.getElementById('editId').value = id;
+            document.getElementById('editNome').value = nome;
+            document.getElementById('editArtista').value = artista;
+            document.getElementById('editAno').value = ano;
+            editModal.show();
+        }
+
+        // Função para atualizar um álbum
+        async function updateAlbum() {
+            const id = document.getElementById('editId').value;
+            const album = {
+                nome: document.getElementById('editNome').value,
+                artista: document.getElementById('editArtista').value,
+                ano: parseInt(document.getElementById('editAno').value)
+            };
+
+            try {
+                const response = await fetch(`${API_URL}/${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(album)
+                });
+
+                if (response.ok) {
+                    editModal.hide();
+                    loadAlbums();
+                } else {
+                    throw new Error('Erro ao atualizar álbum');
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                alert('Erro ao atualizar álbum');
+            }
+        }
+
+        // Função para deletar um álbum
+        async function deleteAlbum(id) {
+            if (!confirm('Tem certeza que deseja excluir este álbum?')) return;
+
+            try {
+                const response = await fetch(`${API_URL}/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    loadAlbums();
+                } else {
+                    throw new Error('Erro ao deletar álbum');
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                alert('Erro ao deletar álbum');
+            }
+        }
+
+        // Event Listeners
+        document.getElementById('albumForm').addEventListener('submit', addAlbum);
+        document.addEventListener('DOMContentLoaded', () => {
+            editModal = new bootstrap.Modal(document.getElementById('editModal'));
+            loadAlbums();
+        });
+    </script>
+</body>
+</html> 
