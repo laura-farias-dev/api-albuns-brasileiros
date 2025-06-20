@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from flask import Flask, jsonify, request, render_template
 from flask_cors import CORS
 
@@ -13,7 +14,7 @@ albuns = [
 def index():
     return render_template('index.html')
 
-@app.route('/api/albuns', methods=['GET']) #rota get
+@app.route('/api/albuns', methods=['GET'])
 def get_albuns():
     return jsonify(albuns)
 
@@ -49,4 +50,4 @@ def delete_album(album_id):
     return jsonify({"error": "Álbum não encontrado"}), 404
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', debug=True)
