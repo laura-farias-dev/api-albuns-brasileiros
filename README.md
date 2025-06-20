@@ -1,184 +1,148 @@
 # API de Álbuns Musicais Brasileiros
 
 ## Descrição
-API REST simples para listar, adicionar, atualizar e remover álbuns musicais brasileiros.
 
-## Pré-requisitos
-- Python 3.8+
-- pip
+API REST simples para listar, adicionar, atualizar e remover álbuns musicais brasileiros. Este projeto inclui um ambiente de desenvolvimento virtualizado com Vagrant para garantir consistência e facilidade de configuração, além de um pipeline de Integração Contínua com GitHub Actions para validação automática.
 
-## Instalação e execução
+## Instalação e Execução
 
-### Clone o repositório
-1. git clone https://github.com/<seu-usuario>/api-albuns-brasileiros.git  
-2. cd api-albuns-brasileiros
+Você pode executar este projeto de duas maneiras: localmente na sua máquina ou dentro de um ambiente virtualizado com Vagrant.
 
-### Crie e ative o ambiente virtual
-1. python3 -m venv venv  
-2. source venv/bin/activate  # Linux/Mac  
-3. venv\Scripts\activate     # Windows
+### Método 1: Localmente (Na sua máquina)
 
-### Instale as dependências
-- pip install -r requirements.txt
+Este método é ideal para desenvolvimento rápido se você já possui o ambiente Python configurado.
 
-### Execute a API
-- python app.py  
+**Pré-requisitos:**
 
-Acesse: [http://localhost:5000/api/albuns](http://localhost:5000/api/albuns)
+  - Python 3.8+
+  - pip
 
-## Workflow Utilizado
-Este projeto utiliza o Github Flow como estratégia de controle de versão.
-O Github Flow é um fluxo de trabalho simples e direto, recomendado para projetos com uma única versão em produção, como APIs simples, sites e blogs.
-Neste fluxo, todo desenvolvimento parte da branch principal (main), e cada nova funcionalidade ou correção é feita em uma branch separada, sendo mesclada à main após revisão. Isso facilita deploys frequentes e mantém o código de produção sempre atualizado.
+**Passos:**
 
-### Por que escolhi o Github Flow?
+1.  **Clone o repositório:**
 
-O projeto é simples, com uma única versão em produção.
-Permite adicionar e revisar novas funcionalidades de forma rápida.
-Facilita o controle e a colaboração, mesmo em equipes pequenas.
+    ```bash
+    git clone https://github.com/laura-farias-dev/api-albuns-brasileiros.git
+    cd api-albuns-brasileiros
+    ```
 
-## Integração Contínua com GitHub Actions
+2.  **Crie e ative o ambiente virtual:**
 
-Este repositório inclui dois fluxos de trabalho automáticos para validar todo push e pull request na branch `main`.
+    ```bash
+    python3 -m venv venv
+    ```
 
-### 1. Workflow para Commits (push)
-**Arquivo:** `.github/workflows/ci-push.yml`
+      - No Windows: `venv\Scripts\activate`
+      - No Linux/Mac: `source venv/bin/activate`
 
-name: CI on Push
+3.  **Instale as dependências:**
 
-on:
-push:
-branches:
-- main
+    ```bash
+    pip install -r requirements.txt
+    ```
 
-jobs:
-build:
-runs-on: ubuntu-latest
+4.  **Execute a API:**
 
-text
-steps:
-  - name: Clonar repositório e trocar para a branch
-    uses: actions/checkout@v4
-    with:
-      ref: main
+    ```bash
+    python app.py
+    ```
 
-  - name: Instalar Python
-    uses: actions/setup-python@v5
-    with:
-      python-version: '3.10'
+    A API estará acessível em `http://localhost:5000/api/albuns`.
 
-  - name: Instalar dependências
-    run: |
-      python -m pip install --upgrade pip
-      pip install -r requirements.txt
+-----
 
+### Método 2: Com Vagrant (Ambiente Virtualizado Recomendado)
 
-  - name: Executar aplicação para teste rápido
-    run: |
-      nohup python app.py &
-      sleep 5
-      curl --fail http://localhost:5000/api/albuns
-text
+Este método cria duas máquinas virtuais para simular um ambiente de cliente-servidor, garantindo que a aplicação rode em um ambiente limpo e consistente, independentemente do seu sistema operacional.
 
-### 2. Workflow para Pull Requests (pull_request)
-**Arquivo:** `.github/workflows/ci-pr.yml`
+**Pré-requisitos Adicionais:**
 
-name: CI on Pull Request
+  - **VirtualBox:** [Download](https://www.virtualbox.org/wiki/Downloads)
+  - **Vagrant:** [Download](https://www.vagrantup.com/downloads)
 
-on:
-pull_request:
-branches:
-- main
-types:
-- opened
-- synchronize
-- reopened
+**Estrutura da Infraestrutura:**
+O Vagrant provisiona duas máquinas virtuais com Ubuntu:
 
-jobs:
-build:
-runs-on: ubuntu-latest
+  * **vm2 (Servidor):**
+      * **IP:** `192.168.56.11`
+      * Executa a API Flask.
+  * **vm1 (Cliente):**
+      * **IP:** `192.168.56.10`
+      * Usada para simular um cliente e testar o acesso à API.
 
-text
-steps:
-  - name: Clonar repositório e trocar para a branch do PR
-    uses: actions/checkout@v4
-    with:
-      ref: ${{ github.event.pull_request.head.ref }}
+**Passos:**
 
-  - name: Instalar Python
-    uses: actions/setup-python@v5
-    with:
-      python-version: '3.10'
+1.  **Inicie a infraestrutura:**
+    No diretório raiz do projeto (onde está o `Vagrantfile`), execute:
 
-  - name: Instalar dependências
-    run: |
-      python -m pip install --upgrade pip
-      pip install -r requirements.txt
+    ```bash
+    vagrant up
+    ```
 
-  - name: Executar aplicação para teste rápido
-    run: |
-      nohup python app.py &
-      sleep 5
-      curl --fail http://localhost:5000/api/albuns
-text
+    Este comando irá baixar o sistema operacional, criar as duas VMs, instalar as dependências do Python e iniciar a API na `vm2` automaticamente.
+
+2.  **Teste a API a partir do cliente:**
+    Para confirmar que tudo está funcionando, acesse a `vm1` e faça uma requisição para a `vm2`.
+
+    ```bash
+    # Conecte-se à VM cliente
+    vagrant ssh vm1
+
+    # Dentro da vm1, use o curl para testar a API na vm2
+    curl http://192.168.56.11:5000/api/albuns
+    ```
+
+    A saída esperada é o JSON com a lista de álbuns.
+
+**Gerenciamento do Ambiente Vagrant:**
+
+  * **Desligar as VMs:** `vagrant halt`
+  * **Ligar as VMs:** `vagrant up`
+  * **Destruir as VMs (apaga tudo):** `vagrant destroy -f`
+  * **Verificar o status:** `vagrant status`
 
 ## Rotas da API
 
+  - **URL Base Local:** `http://localhost:5000`
+  - **URL Base via Vagrant (testando de fora da VM):** Acesso via `localhost` é possível com `port forwarding`, mas o teste principal é feito entre as VMs.
+
 ### Listar álbuns (GET)
-- **Endpoint:** `/api/albuns`  
-- **Método:** GET  
-- **Descrição:** Retorna a lista de álbuns musicais brasileiros.  
-- **Exemplo de uso:**  
-  Acesse `http://localhost:5000/api/albuns` pelo navegador ou pelo Postman.
+
+  - **Endpoint:** `/api/albuns`
+  - **Exemplo de uso:** `http://localhost:5000/api/albuns`
 
 ### Adicionar álbum (POST)
-- **Endpoint:** `/api/albuns`  
-- **Método:** POST  
-- **Descrição:** Adiciona um novo álbum à lista.  
-- **Exemplo de uso no Postman:**  
-  1. Selecione o método **POST**.  
-  2. Use a URL: `http://localhost:5000/api/albuns`  
-  3. Na aba **Body**, escolha **raw** e selecione **JSON**.  
-  4. Insira um JSON como:
-     ```
-     {
-       "nome": "Tropicália",
-       "artista": "Caetano Veloso",
-       "ano": 1968
-     }
-     ```
-  5. Clique em **Send**.  
-     A resposta será o álbum criado, com um novo `id`.
+
+  - **Endpoint:** `/api/albuns`
+  - **Exemplo de Corpo (Body) JSON:**
+    ```json
+    {
+      "nome": "Tropicália",
+      "artista": "Caetano Veloso",
+      "ano": 1968
+    }
+    ```
 
 ### Atualizar álbum (PUT)
-- **Endpoint:** `/api/albuns/<album_id>`  
-- **Método:** PUT  
-- **Descrição:** Atualiza os dados de um álbum existente.  
-- **Exemplo de uso no Postman:**  
-  1. Selecione o método **PUT**.  
-  2. Use a URL: `http://localhost:5000/api/albuns/1`  
-  3. Na aba **Body**, escolha **raw** e selecione **JSON**.  
-  4. Insira o JSON com os campos a atualizar:
-     ```
-     {
-       "nome": "Clube da Esquina 2",
-       "artista": "Milton Nascimento",
-       "ano": 1978
-     }
-     ```
-  5. Clique em **Send**.  
-     A resposta será o álbum já atualizado.
+
+  - **Endpoint:** `/api/albuns/<album_id>`
+  - **Exemplo de Corpo (Body) JSON:**
+    ```json
+    {
+      "nome": "Clube da Esquina 2",
+      "ano": 1978
+    }
+    ```
 
 ### Remover álbum (DELETE)
-- **Endpoint:** `/api/albuns/<album_id>`  
-- **Método:** DELETE  
-- **Descrição:** Remove um álbum pelo seu `id`.  
-- **Exemplo de uso no Postman:**  
-  1. Selecione o método **DELETE**.  
-  2. Use a URL: `http://localhost:5000/api/albuns/1`  
-  3. Clique em **Send**.  
-     A resposta confirmará a remoção, retornando uma mensagem e o álbum excluído.
 
----
+  - **Endpoint:** `/api/albuns/<album_id>`
 
-Agora, toda modificação na branch `main`, seja via commit ou pull request, disparará validações automáticas que clonam o repositório, instalam o interpretador e dependências e executam a API.
+## Workflow Utilizado
+
+Este projeto utiliza o Github Flow como estratégia de controle de versão. O Github Flow é um fluxo de trabalho simples e direto, recomendado para projetos com uma única versão em produção.
+Neste fluxo, todo desenvolvimento parte da branch principal (`main`), e cada nova funcionalidade ou correção é feita em uma branch separada, sendo mesclada à `main` após revisão.
+
+## Integração Contínua com GitHub Actions
+
+Este repositório inclui fluxos de trabalho automáticos (`.github/workflows/`) para validar todo `push` e `pull_request` na branch `main`. Os workflows instalam as dependências e executam um teste rápido na API para garantir a integridade do código.
