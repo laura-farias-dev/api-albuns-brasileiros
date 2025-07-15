@@ -13,7 +13,7 @@ albuns = [
 def index():
     return render_template('index.html')
 
-@app.route('/api/albuns', methods=['GET']) #rota get
+@app.route('/api/albuns', methods=['GET'])
 def get_albuns():
     return jsonify(albuns)
 

@@ -1,0 +1,25 @@
+
+- name: Configura e Implanta a API Flask na VM2
+  hosts: servidores_app # Alvo definido no inventário
+  become: yes # Permite executar tarefas com 'sudo' por padrão
+  tasks:
+    - name: Instala pacotes essenciais (git, pip, venv, setuptools)
+      apt:
+        name: ['git', 'python3-pip', 'python3-venv', 'python3-setuptools']
+        state: present
+        update_cache: yes
+
+    - name: Clona o repositório da aplicação
+      become: no # Executa esta tarefa específica como o usuário 'vagrant'
+      git:
+        repo: 'https://github.com/laura-farias-dev/api-albuns-brasileiros.git'
+        dest: /home/vagrant/api-albuns-brasileiros
+
+    - name: Cria o venv e instala as dependências
+      become: no
+      shell: |
+        python3 -m venv /home/vagrant/api-albuns-brasileiros/venv
+        /home/vagrant/api-albuns-brasileiros/venv/bin/pip install -r /home/vagrant/api-albuns-brasileiros/requirements.txt
+      args:
+    # Garante que a tarefa só rode se o venv ainda não existir, tornando-a idempotente.
+        creates: /home/vagrant/api-albuns-brasileiros/venv/bin/pip
